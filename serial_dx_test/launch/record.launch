@@ -1,0 +1,10 @@
+<launch>
+  <arg name="record_path" default="/rosbag/hand_data/record.bag"/>
+
+  <node pkg="rosbag" type="record" name="rosbag_hand_data" args="-o 
+             $(find serial_dx_test)$(arg record_path)
+             /send_pot
+             /current_controller1
+             /current_controller2
+             /mode_setter"/>
+</launch>

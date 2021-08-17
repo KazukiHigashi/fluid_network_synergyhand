@@ -1,0 +1,15 @@
+<launch>
+  <arg name="start"/>
+  <arg name="goal"/>
+  <arg name="ex_type"/>
+
+  <arg name="record_path" default="/rosbag/hand_data/record_$(arg ex_type)_$(arg start)_$(arg goal).bag"/>
+
+  <node pkg="rosbag" type="record" name="rosbag_hand_data" args="-o 
+             $(find serial_dx_test)$(arg record_path)
+             /send_pot
+             /mode_setter"/>
+
+  <node pkg="serial_dx_test" type="hysteresis_test.py" name="motor_position_control"
+        args="$(arg start) $(arg goal)"/>
+</launch>
