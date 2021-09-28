@@ -1,0 +1,10 @@
+<launch>
+  <arg name="dev_port" default="/dev/ttyACM0"/>
+  <arg name="ftsensor_ip" default="10.0.1.16"/>
+
+  <node name="pot_publish" pkg="rosserial_python" type="serial_node.py" args="$(arg dev_port)"/>
+  <node name="ftsensor_publish" pkg="ft_measurement" type="pub_ftsensor.py" args="$(arg ftsensor_ip)"/>
+  
+  
+
+</launch>

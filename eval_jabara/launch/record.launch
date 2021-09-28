@@ -1,0 +1,12 @@
+<launch>
+  <arg name="stage_angle"/>
+  <arg name="cnt"/>
+  <arg name="record_path" default="/rosbag/$(arg stage_angle)/$(arg cnt).bag"/>
+
+  <node pkg="rosbag" type="record" name="rosbag_hand_data" args="-o 
+             $(find eval_jabara)$(arg record_path)
+             /ftsensor_raw
+             /rcd_data
+             "/>
+
+</launch>
