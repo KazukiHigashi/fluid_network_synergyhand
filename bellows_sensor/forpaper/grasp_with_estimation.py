@@ -16,18 +16,16 @@ import numpy as np
 
 from stage_py2 import StageControl
 
-label2id = {"a": 0, "b": 1, "c": 2, "d": 3, "f": 4, "g": 5}
+label2id = {"A": 0, "B": 1, "C": 2, "D": 3, "F": 4, "G": 5}
 
 def step_method(dm, mc, predictor, init_pot, init_time, init_mz, writer, joint_labels, jid):
   # print(input_data)
   for joint_l in joint_labels:
     input_data = np.array([[dm.potangle[label2id[joint_l]], dm.normed_stretch[joint_l], dm.pressure] + mc.motor_s])
-    print(input_data)
-    
     raw_pred = predictor[joint_l].forward_propagation(input_data)[0]
-    dm.add_pred(raw_pred, joint_l, "dnn")
-    prediction = dm.get_ma_pred(joint_l, "dnn")
-    dm.pubpred_dnn[joint_l].publish(1000*prediction)
+    dm.add_pred(raw_pred, joint_l)
+    prediction = dm.get_ma_pred(joint_l)
+    dm.pubpred[joint_l].publish(1000*prediction)
   writer.writerow([time.time()-init_time, mc.get_position(), dm.potangle[jid], dm.stretch[jid], dm.pressure, dm.mz, prediction] + mc.motor_s)
   dm.pubmz.publish(-1000*(dm.mz-init_mz))
 
@@ -45,24 +43,24 @@ def loop(pot_min, filepath, dm, mc, predictor, t_stage, mmlist=[0, 10], max_pres
   for i, mm in enumerate(mmlist):
     os.makedirs(os.path.join(filepath, str(mm)))
     t_stage.absolute_move(axis="THETA_STAGE", mm=init_stage_angle, speed=30)
-    time.sleep(4)
+    time.sleep(6)
     print("pressure -> 30")
-    mc.servo_pos_control(goal=20, jid=jid, diff_type="pressure", speed=10)
+    mc.servo_pos_control(goal=30, jid=jid, diff_type="pressure", speed=20)
     time.sleep(0.5)
     print("pressure -> -15")
-    mc.servo_pos_control(goal=-15, jid=jid, diff_type="pressure", speed=10)
+    mc.servo_pos_control(goal=-15, jid=jid, diff_type="pressure", speed=20)
 
     t_stage.absolute_move(axis="THETA_STAGE", mm=mm, speed=30)
-    time.sleep(4)
+    time.sleep(6)
     print(max_pressure_list)
     for n, max_pressure in enumerate(max_pressure_list[i]):
       dm.clear_ma()
       # To make initial condition stable
       print("pressure -> 15")
-      mc.servo_pos_control(goal=15, jid=jid, diff_type="pressure", speed=10)
+      mc.servo_pos_control(goal=15, jid=jid, diff_type="pressure", speed=20)
       time.sleep(0.5)
       print("pressure -> -15")
-      mc.servo_pos_control(goal=-15, jid=jid, diff_type="pressure", speed=10)
+      mc.servo_pos_control(goal=-15, jid=jid, diff_type="pressure", speed=20)
       
       time.sleep(3)
       with open(os.path.join(filepath, str(mm), str(n)+".csv"), "w") as f: 
@@ -75,16 +73,16 @@ def loop(pot_min, filepath, dm, mc, predictor, t_stage, mmlist=[0, 10], max_pres
         init_mz = dm.mz
 
         maxpulse = 30000 - mm*150
-        for goal, diff_type in [(init_srv-maxpulse, "servo"), (-15, "pressure")]:
-          for i in range(200):
+        for goal, diff_type in [(-0.1, "predict"), (-15, "pressure")]:
+          for i in range(300):
             step_method(dm, mc, predictor, init_pot, init_time, init_mz, writer, joint_labels, jid)
             time.sleep(0.03)
  
-          while not mc.step_diff(goal=goal, jid=jid, diff_type=diff_type, max_pressure=max_pressure, speed=10):
+          while not mc.step_diff(goal=goal, jid=jid, diff_type=diff_type, max_pressure=max_pressure, speed=20, joint_l="A"):
             step_method(dm, mc, predictor, init_pot, init_time, init_mz, writer, joint_labels, jid)
             time.sleep(0.03)
  
-          for i in range(200):
+          for i in range(300):
             step_method(dm, mc, predictor, init_pot, init_time, init_mz, writer, joint_labels, jid)
             time.sleep(0.03)
 
@@ -116,7 +114,7 @@ def main(config_path, sign):
   if config["init"]["num"] != "None":
     max_pressure_list = [[config["init"]["pressure"]]*config["init"]["num"] + com_pres_range]
     max_pressure_list = max_pressure_list + [com_pres_range]*(len(mmlist)-1)
-  else: 
+  else:
     max_pressure_list = [com_pres_range]*len(mmlist)
   
   # Configure test data
@@ -127,7 +125,8 @@ def main(config_path, sign):
     max_pressure_list = max_pressure_list + test_max_pressure_list 
 
   pot_inv = config["inv"]
-  jid = config["joint_id"]
+  jlabel = config["joint_label"]
+  jid = label2id[jlabel]
   init_stage_angle = config["stage"]["min"]
 
   # Start all services
@@ -137,7 +136,7 @@ def main(config_path, sign):
 
   print "\n\n"
   time.sleep(1)
-  # Check the configure for 10 seconds!
+  # Check the configuration for 10 seconds!
   print "mmlist: " + str(mmlist)
   print "pressure list: " + str(max_pressure_list)
   print "Current pot: {}".format(dm.potangle[jid])
@@ -155,12 +154,12 @@ def main(config_path, sign):
   try:
     loop(pot_min=config["potmin"], filepath=filepath, mmlist=mmlist, dm=dm, mc=mc, predictor=predictor, t_stage=t_stage, max_pressure_list=max_pressure_list, pot_inv=pot_inv, jid=jid, joint_labels=joint_labels, init_stage_angle=init_stage_angle)
     t_stage.absolute_move(axis="THETA_STAGE", mm=init_stage_angle, speed=30)
-    mc.servo_pos_control(goal=0, jid=jid, diff_type="pressure", speed=3)
+    mc.servo_pos_control(goal=0, jid=jid, diff_type="pressure", speed=30)
  
   except KeyboardInterrupt:
     print "interrupted"
     t_stage.absolute_move(axis="THETA_STAGE", mm=init_stage_angle, speed=30)
-    mc.servo_pos_control(goal=0, jid=jid, diff_type="pressure", speed=3)
+    mc.servo_pos_control(goal=0, jid=jid, diff_type="pressure", speed=30)
     rospy.signal_shutdown("finish")
  
 if __name__ == "__main__":
