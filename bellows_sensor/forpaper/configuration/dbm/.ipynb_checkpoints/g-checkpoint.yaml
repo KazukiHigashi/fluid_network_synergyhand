@@ -1,0 +1,72 @@
+delta:
+  g: !!python/object/apply:numpy.core.multiarray.scalar
+  - &id001 !!python/object/apply:numpy.dtype
+    args:
+    - f8
+    - false
+    - true
+    state: !!python/tuple
+    - 3
+    - <
+    - null
+    - null
+    - null
+    - -1
+    - -1
+    - 0
+  - !!binary |
+    nlOvRpYxwz8=
+inv: dummy
+joint_id: dummy
+kb:
+  g: !!python/object/apply:numpy.core.multiarray.scalar
+  - *id001
+  - !!binary |
+    FxrIv0CfSkA=
+km:
+  g: dummy
+pot:
+  max:
+    g: !!python/object/apply:numpy.core.multiarray.scalar
+    - &id002 !!python/object/apply:numpy.dtype
+      args:
+      - i8
+      - false
+      - true
+      state: !!python/tuple
+      - 3
+      - <
+      - null
+      - null
+      - null
+      - -1
+      - -1
+      - 0
+    - !!binary |
+      DQIAAAAAAAA=
+  min:
+    g: !!python/object/apply:numpy.core.multiarray.scalar
+    - *id002
+    - !!binary |
+      HgEAAAAAAAA=
+pressure:
+  max: dummy
+  min: dummy
+  width: dummy
+stage:
+  max: dummy
+  min: dummy
+  width: dummy
+stretch:
+  max:
+    g: !!python/object/apply:numpy.core.multiarray.scalar
+    - *id001
+    - !!binary |
+      MzMzMzP7gUA=
+  min:
+    g: !!python/object/apply:numpy.core.multiarray.scalar
+    - *id001
+    - !!binary |
+      AAAAAAAAAAA=
+weights:
+  g: dummy

@@ -26,15 +26,15 @@ def step_method(dm, mc, dbm, predictor, init_pot, init_time, init_mz, writer, jo
     raw_pred_dbm = dbm[joint_l].predict(dm.pressure, dm.potangle[label2id[joint_l]], dm.normed_stretch[joint_l])
 
     dm.add_pred(raw_pred_dnn, joint_l, "dnn")
-    prediction = dm.get_ma_pred(joint_l, "dnn")
-    dm.pubpred_dnn[joint_l].publish(1000*prediction)
+    dnn_prediction = dm.get_ma_pred(joint_l, "dnn")
+    dm.pubpred_dnn[joint_l].publish(1000*dnn_prediction)
 
     dm.add_pred(raw_pred_dbm, joint_l, "dbm")
-    prediction = dm.get_ma_pred(joint_l, "dbm")
-    dm.pubpred_dbm[joint_l].publish(1000*prediction)
+    dbm_prediction = dm.get_ma_pred(joint_l, "dbm")
+    dm.pubpred_dbm[joint_l].publish(1000*dbm_prediction)
 
-  writer.writerow([time.time()-init_time, mc.get_position(), dm.potangle[jid], dm.stretch[jid], dm.pressure, dm.mz, prediction] + mc.motor_s)
-  dm.pubmz.publish(1000*(dm.mz-init_mz))
+  writer.writerow([time.time()-init_time, mc.get_position(), dm.potangle[jid], dm.stretch[jid], dm.pressure, dm.mz, dnn_prediction, dbm_prediction] + mc.motor_s)
+  dm.pubmz.publish(-1000*(dm.mz-init_mz))
 
 def loop(pot_min, filepath, dm, mc, dbm, predictor, t_stage, mmlist=[0, 10], max_pressure_list=[10, 20, 30], pot_inv=False, jid=0, joint_labels=["D"], init_stage_angle=0):
   # jid
@@ -64,10 +64,10 @@ def loop(pot_min, filepath, dm, mc, dbm, predictor, t_stage, mmlist=[0, 10], max
       dm.clear_ma()
       # To make initial condition stable
       print("pressure -> 15")
-      mc.servo_pos_control(goal=15, jid=jid, diff_type="pressure", speed=20)
+      mc.servo_pos_control(goal=15, jid=jid, diff_type="pressure", speed=10)
       time.sleep(0.5)
       print("pressure -> -15")
-      mc.servo_pos_control(goal=-15, jid=jid, diff_type="pressure", speed=20)
+      mc.servo_pos_control(goal=-15, jid=jid, diff_type="pressure", speed=10)
       
       time.sleep(2)
 
@@ -86,18 +86,18 @@ def loop(pot_min, filepath, dm, mc, dbm, predictor, t_stage, mmlist=[0, 10], max
         init_mz = dm.mz
 
         maxpulse = 30000 - mm*150
-        for goal, diff_type in [(-9000, "servo"), (-15, "pressure")]:
+        for goal, diff_type in [(-0.04, "prediction"), (-15, "pressure")]:
           for i in range(300):
             step_method(dm, mc, dbm, predictor, init_pot, init_time, init_mz, writer, joint_labels, jid)
             time.sleep(0.03)
  
-          while not mc.step_diff(goal=goal, jid=jid, diff_type=diff_type, max_pressure=max_pressure, speed=20):
+          while not mc.step_diff(goal=goal, jid=jid, diff_type=diff_type, max_pressure=max_pressure, speed=8, joint_l="a"):
             step_method(dm, mc, dbm, predictor, init_pot, init_time, init_mz, writer, joint_labels, jid)
             time.sleep(0.03)
  
           # publishing grasp state
           for joint_l in joint_labels:
-            dbm[joint_l].grasped(pressure_grasped=dm.pressure)
+            dbm[joint_l].grasped(pressure_grasped=dm.pressure, stretch_highest=dm.normed_stretch[joint_l])
 
           for i in range(300):
             step_method(dm, mc, dbm, predictor, init_pot, init_time, init_mz, writer, joint_labels, jid)
@@ -175,12 +175,12 @@ def main(config_path, sign):
   try:
     loop(pot_min=config["pot"]["min"][j_label], filepath=filepath, mmlist=mmlist, dm=dm, mc=mc, dbm=dbm, predictor=predictor, t_stage=t_stage, max_pressure_list=max_pressure_list, pot_inv=pot_inv, jid=jid, joint_labels=joint_labels, init_stage_angle=init_stage_angle)
     t_stage.absolute_move(axis="THETA_STAGE", mm=init_stage_angle, speed=20)
-    mc.servo_pos_control(goal=0, jid=jid, diff_type="pressure", speed=20)
+    mc.servo_pos_control(goal=0, jid=jid, diff_type="pressure", speed=10)
  
   except KeyboardInterrupt:
     print "interrupted"
     t_stage.absolute_move(axis="THETA_STAGE", mm=init_stage_angle, speed=20)
-    mc.servo_pos_control(goal=0, jid=jid, diff_type="pressure", speed=20)
+    mc.servo_pos_control(goal=0, jid=jid, diff_type="pressure", speed=10)
     rospy.signal_shutdown("finish")
  
 if __name__ == "__main__":

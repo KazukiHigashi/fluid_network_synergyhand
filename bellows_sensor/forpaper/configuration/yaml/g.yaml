@@ -1,0 +1,39 @@
+delta:
+  g: 0.24533349059322263
+init:
+  num: 0
+  pressure: 30
+inv: False
+joint_label: g
+kb:
+  g: 36.63377143936257
+km:
+  g: '/home/ubuntu/workspace/src/fluid_network_synergyhand/bellows_sensor/forpaper/configuration/dbm/g_dbm_py2'
+pot:
+  max:
+    g: 516.0
+  min:
+    g: 279.0
+pressure:
+  max: 31
+  min: 25
+  width: 2
+stage:
+  max: 59
+  min: 60
+  width: -5
+stretch:
+  max:
+    g: 567.8
+  min:
+    g: 0.0
+test_pressure:
+  max: 0
+  min: 0
+  width: 1
+test_stage:
+  max: 0
+  min: 0
+  width: 1
+weights:
+  g: '/home/ubuntu/workspace/src/fluid_network_synergyhand/bellows_sensor/forpaper/configuration/dnn/g_py2'

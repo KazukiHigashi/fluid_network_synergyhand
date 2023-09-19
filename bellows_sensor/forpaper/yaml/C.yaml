@@ -1,0 +1,44 @@
+date: 
+  year: 2022
+  month: 11
+  date: 28
+
+weights:
+  C: '/home/ubuntu/workspace/src/fluid_network_synergyhand/bellows_sensor/scripts/weights0526_py2'
+
+stretch:
+ C: 
+  max: 620.2
+  min: 111.8
+
+stage:
+  min: 0
+  max: 76 
+  width: 5
+
+test_stage:
+  min: 3
+  max: 76
+  width: 25
+
+init:
+  pressure: 30
+  num: 0  
+
+pressure:
+  min: 15
+  max: 31
+  width: 5 
+
+test_pressure:
+  min: 7
+  max: 31
+  width: 7
+
+potmin: 277
+
+inv: False
+
+joint_id: 2
+
+resitance: 1600     

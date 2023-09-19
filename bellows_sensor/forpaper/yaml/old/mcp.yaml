@@ -1,0 +1,45 @@
+date: 
+  year: 2022
+  month: 5
+  date: 12
+
+weights:
+  mcp: '/home/ubuntu/workspace/src/fluid_network_synergyhand/bellows_sensor/scripts/weights0530_py2'
+
+stretch:
+  mcp:
+    max: 600.0
+    min: 0.0    
+
+stage:
+  min: 0
+  max: 76
+  width: 5
+
+test_stage:
+  min: 3
+  max: 76
+  width: 25
+
+init:
+  pressure: 30
+  num: 0
+
+pressure:
+  min: 5
+  max: 31
+  width: 5 
+
+test_pressure:
+  min: 7
+  max: 31
+  width: 7
+
+potmin:
+  mcp: 280
+
+inv: False
+
+joint_id: 0
+
+resitance: 1600     

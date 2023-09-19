@@ -80,7 +80,7 @@ def loop(pot_min, filepath, dm, mc, predictor, t_stage, mmlist=[0, 10], max_pres
             step_method(dm, mc, predictor, init_pot, init_time, init_mz, writer, joint_labels, jid)
             time.sleep(0.03)
  
-          while not mc.step_diff(goal=goal, jid=jid, diff_type=diff_type, max_pressure=max_pressure, speed=10):
+          while not mc.step_diff(goal=goal, jid=jid, diff_type=diff_type, max_pressure=max_pressure, speed=8):
             step_method(dm, mc, predictor, init_pot, init_time, init_mz, writer, joint_labels, jid)
             time.sleep(0.03)
  

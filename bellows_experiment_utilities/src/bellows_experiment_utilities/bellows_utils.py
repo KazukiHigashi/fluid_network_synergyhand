@@ -61,7 +61,11 @@ class DualBellowsModel:
 
     self.subcontact = rospy.Subscriber("contact", Float32MultiArray, self.contactcb)
 
-    self.init()
+    self.mode = "bc"
+    self.st_contacted = None
+    self.pot_contacted = None
+    self.pressure_grasped = None
+    self.stretch_highest = None
 
   def to_angle(self, x):
     return self.anglea*x + self.angleb
@@ -86,17 +90,20 @@ class DualBellowsModel:
     self.st_contacted = message.data[0]
     self.pot_contacted = message.data[1]
 
-  def grasped(self, pressure_grasped):
+  def grasped(self, pressure_grasped, stretch_highest):
     # This method should be called from the main code when completing a grasp.
+    print("@GRASPED!@")
     self.mode = "ag"
     if self.pressure_grasped is None:
       self.pressure_grasped = pressure_grasped
+      self.stretch_highest = stretch_highest
 
   def init(self):
     self.mode = "bc"
     self.st_contacted = None
     self.pot_contacted = None
     self.pressure_grasped = None
+    self.stretch_highest = None
 
 
   def predict(self, pressure, potentio, stretch):
@@ -110,18 +117,20 @@ class DualBellowsModel:
     if self.mode == "bc":
       torque = self.to_force(pressure) - self.Kb*(self.to_angle(potentio) - self.to_angle(self.deg0_pot))*self.r - self.delta
     elif self.mode == "ac":
+      print()
       print(self.to_angle(self.pot_contacted), self.pressure_grasped)
       print(self.to_force(pressure), self.to_angle(potentio), stretch)
       km = self.km_predictor.forward_propagation(np.array([[self.to_angle(self.pot_contacted), pressure]]))[0]
       torque = self.to_force(pressure) - self.Kb*(self.to_angle(potentio) - self.to_angle(self.deg0_pot))*self.r - self.delta - km*(stretch - self.lm0(stretch))
+      print "#{},{}".format(km, torque*self.r)
     elif self.mode == "ag":
       print()
       print(pressure, potentio, stretch)
       print(self.to_angle(self.pot_contacted), self.pressure_grasped)
-      print(self.to_force(pressure), self.to_angle(potentio), stretch)
+      print(self.to_force(pressure), self.to_angle(potentio), stretch, self.stretch_highest)
       km = self.km_predictor.forward_propagation(np.array([[self.to_angle(self.pot_contacted), self.pressure_grasped]]))[0]
-      torque = self.to_force(pressure) - self.Kb*(self.to_angle(potentio) - self.to_angle(self.deg0_pot))*self.r - self.delta - km*(stretch - self.lm0(stretch))
-      print(km, torque*self.r)
+      torque = self.to_force(pressure) - self.Kb*(self.to_angle(potentio) - self.to_angle(self.deg0_pot))*self.r - self.delta - km*(self.stretch_highest - self.lm0(stretch))
+      print "#{},{}".format(km, torque*self.r)
     return torque*self.r
 
 
@@ -167,6 +176,7 @@ class DataManager:
 
     self.ma_pres = []
     self.ma_strc = []
+
     # self.ma_pred = []
 
     self.max_stretch = max_stretch
@@ -308,9 +318,11 @@ class MotorController:
       allowable_err = 0.2
     
     elif diff_type == "prediction":
-      print "prediction {}, goal {}".format(self.dm.get_ma_pred(joint_l), goal)
-      diff = -(-self.dm.get_ma_pred(joint_l) - goal)
-      allowable_err = 0.001
+      print "prediction {}, goal {}".format(self.dm.get_ma_pred(joint_l, "dbm"), goal)
+      diff = -(-self.dm.get_ma_pred(joint_l, "dbm") - goal)
+      allowable_err = 0.003
+    else:
+      print "!!!caution diff type is illegal!!!"  
 
     print diff
     if abs(diff) <= allowable_err:
